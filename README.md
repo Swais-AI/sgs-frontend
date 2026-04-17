@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Next.js Google Auth UI
 
 This project is a custom Next.js App Router login screen that matches the shared reference: blue gradient background, glassy white cards, role picker, and Google authentication.
@@ -35,3 +36,6 @@ npm run dev
 - `/` is the custom sign-in page.
 - `/dashboard` is protected and only opens for authenticated users.
 - The selected role is passed into the post-login redirect so you can later connect it to profile provisioning or onboarding logic.
+=======
+# sgs-frontend
+>>>>>>> a3bfc6de4ce2c5c2db30d33251c1fad417e2a1df
