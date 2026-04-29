@@ -7,43 +7,43 @@ const roles = [
     value: "super-admin",
     title: "Super Admin (SWAIS)",
     description: "Full system access and platform management for SWAIS.",
-    icon: "★",
+    icon: "SA",
   },
   {
     value: "admin",
     title: "Admin (College)",
     description: "Manage college, users, content and academic activities.",
-    icon: "🏛",
+    icon: "AD",
   },
   {
     value: "teacher",
     title: "Teacher",
     description: "Create and manage classes, content and assess student learning.",
-    icon: "🧑‍🏫",
+    icon: "TE",
   },
   {
-    value: "principle",
-    title: "Principle",
+    value: "principal",
+    title: "Principal",
     description: "Oversee school operations, staff, and academic performance.",
-    icon: "🏫",
+    icon: "PR",
   },
   {
     value: "student",
     title: "Student",
     description: "Access learning materials, attend classes and track progress.",
-    icon: "🎓",
+    icon: "ST",
   },
   {
     value: "parent",
     title: "Parent",
     description: "Monitor your child's learning progress and activities.",
-    icon: "👪",
+    icon: "PA",
   },
   {
     value: "guest",
     title: "Guest",
     description: "Explore public content and resources without a full account.",
-    icon: "👤",
+    icon: "GU",
   },
 ];
 
@@ -105,7 +105,7 @@ export function RoleSelector({ action }: RoleSelectorProps) {
             <span className="role-trigger-label">{selected.title}</span>
           </span>
           <span className="select-arrow" aria-hidden="true">
-            {isOpen ? "⌃" : "⌄"}
+            {isOpen ? "^" : "v"}
           </span>
         </button>
 

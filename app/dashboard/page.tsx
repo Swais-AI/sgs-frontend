@@ -40,11 +40,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
       if (!isAllowed) {
         accessDeniedMessage =
-          "This Google account is either missing from sgs_local.student_master.student_email or the matching record is not active.";
+          "This Google account is either not registered for student access or the matching record is inactive.";
       }
     } catch {
       accessDeniedMessage =
-        "Google sign-in worked, but the student validation against your local Postgres database failed.";
+        "Google sign-in worked, but the student validation check could not be completed.";
     }
   }
 
