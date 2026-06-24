@@ -1,22 +1,30 @@
-import { db } from "@/lib/db";
+import { Pool } from 'pg';
 
-export async function isStudentEmailAllowed(email: string) {
-  const normalizedEmail = email.trim().toLowerCase();
+const pool = new Pool({
+  host: process.env.PGHOST,
+  port: parseInt(process.env.PGPORT || '5432'),
+  user: process.env.PGUSER,
+  password: process.env.PGPASSWORD,
+  database: process.env.PGDATABASE,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
-  if (!normalizedEmail) {
+export async function isStudentEmailAllowed(email: string): Promise<boolean> {
+  try {
+    const result = await pool.query(
+      `SELECT student_id 
+       FROM sgs_student_master 
+       WHERE student_email = $1 
+       AND is_active = true
+       AND record_status = 'Active'`,
+      [email]
+    );
+
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Student validation error:', error);
     return false;
   }
-
-  const result = await db.query(
-    `
-      select 1
-      from student_master
-      where lower(student_email) = $1
-        and is_active = true
-      limit 1
-    `,
-    [normalizedEmail],
-  );
-
-  return (result.rowCount ?? 0) > 0;
 }
