@@ -14,7 +14,7 @@ type DashboardPageProps = {
 const DASHBOARD_URLS: { [key: string]: string } = {
   'admin': 'http://16.112.236.67:3001/admin/students',       // SGS Admin Dashboard
   'principal': 'http://16.112.236.67:3000',                    // Headmaster Dashboard
-  'teacher': 'http://16.112.236.67:3002',      // Faculty Dashboard
+  'teacher': 'http://16.112.236.67:3002/dashboard',      // Faculty Dashboard
   'student': 'http://16.112.236.67:84',    // Student Dashboard
   'parent': 'http://16.112.236.67:3009',      // Parent Dashboard
   'guest': 'http://16.112.236.67:3006/guest/dashboard',        // Guest Dashboard
