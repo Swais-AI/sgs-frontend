@@ -21,6 +21,10 @@ function getErrorMessage(error?: string) {
 export default async function Home({ searchParams }: HomeProps) {
   const session = await auth();
 
+  if (session?.user) {
+    redirect("/dashboard");
+  }
+
   const params = await searchParams;
   const errorMessage = getErrorMessage(params.error);
 

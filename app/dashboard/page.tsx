@@ -3,7 +3,6 @@ import { auth } from "@/auth";
 import { logout } from "@/app/actions";
 import { isStudentEmailAllowed } from "@/lib/student-access";
 import { checkUserRoleInDB } from "@/lib/user-role-check";
-import { cookies } from "next/headers";
 
 type DashboardPageProps = {
   searchParams: Promise<{
@@ -42,13 +41,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   }
 
   const params = await searchParams;
-  const cookieStore = await cookies();
-  const roleFromCookie = cookieStore.get("selected_role")?.value;
-  const rawRole = params.role ?? roleFromCookie;
-  // Clear the cookie now that we've consumed it
-  if (roleFromCookie) cookieStore.delete("selected_role");
-  const selectedRole = rawRole?.toLowerCase();
-  const roleLabel = formatRole(rawRole);
+  const selectedRole = params.role?.toLowerCase();
+  const roleLabel = formatRole(params.role);
   const email = session.user?.email ?? "";
 
   let accessDeniedMessage: string | null = null;
