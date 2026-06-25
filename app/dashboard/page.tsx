@@ -109,10 +109,31 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     );
   }
 
+  // Roles that support JWT token handoff — add more as each app implements it
+  const SSO_ENABLED_ROLES = ['teacher'];
+
   // If role is valid, redirect to the respective dashboard
   const dashboardUrl = selectedRole ? DASHBOARD_URLS[selectedRole] : null;
 
   if (dashboardUrl) {
+    if (SSO_ENABLED_ROLES.includes(selectedRole!) && process.env.SGS_BACKEND_URL && process.env.SGS_SSO_SECRET) {
+      try {
+        const res = await fetch(`${process.env.SGS_BACKEND_URL}/api/v1/auth/sso-token`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-SSO-Secret": process.env.SGS_SSO_SECRET,
+          },
+          body: JSON.stringify({ email }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          redirect(`${dashboardUrl}?token=${encodeURIComponent(data.access_token)}`);
+        }
+      } catch {
+        // SSO fetch failed — fall through to plain redirect
+      }
+    }
     redirect(dashboardUrl);
   }
 
