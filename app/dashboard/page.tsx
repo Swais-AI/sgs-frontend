@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
-// Role to Dashboard URL mapping - same as login page
+// Role to Dashboard URL mapping
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
   "College Admin": "http://16.112.236.67:3001/admin/students",
   "Headmaster": "http://16.112.236.67:3000",
@@ -17,8 +17,12 @@ export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [error, setError] = useState('');
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
+    // Skip if already redirecting
+    if (isRedirecting) return;
+    
     const userRole = sessionStorage.getItem('userRole');
     const dashboardUrl = sessionStorage.getItem('dashboardRedirectUrl');
     
@@ -27,6 +31,8 @@ export default function DashboardPage() {
       router.push('/');
       return;
     }
+
+    setIsRedirecting(true);
 
     // If we have a stored dashboard URL, use it
     if (dashboardUrl) {
@@ -40,8 +46,18 @@ export default function DashboardPage() {
       window.location.href = url;
     } else {
       setError('Invalid role selected. Please contact administrator.');
+      setIsRedirecting(false);
     }
-  }, [router]);
+  }, [router, isRedirecting]);
+
+  // Show loading state while checking session
+  if (status === 'loading') {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   if (error) {
     return (

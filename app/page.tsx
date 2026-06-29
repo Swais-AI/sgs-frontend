@@ -119,7 +119,7 @@ export default function Home() {
     setMessage("");
 
     try {
-      // Store user data in sessionStorage for the dashboard
+      // Store user data in sessionStorage
       sessionStorage.setItem('userRole', selectedRole);
       sessionStorage.setItem('userEmail', email.trim() || phone.trim());
       
@@ -135,14 +135,16 @@ export default function Home() {
       // Store the dashboard URL for redirect after Google auth
       sessionStorage.setItem('dashboardRedirectUrl', dashboardUrl);
 
-      // For local testing, you can skip Google auth and redirect directly
-      if (process.env.NODE_ENV === 'development') {
-        // For testing, just redirect directly
+      // Check if we're in development or production
+      const isDev = process.env.NODE_ENV === 'development';
+      
+      if (isDev) {
+        // In development, redirect directly (skip Google auth for testing)
         window.location.href = dashboardUrl;
         return;
       }
 
-      // For production - Google OAuth
+      // Production - Google OAuth
       await signIn('google', {
         callbackUrl: '/dashboard',
         redirect: true,
