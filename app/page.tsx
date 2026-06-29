@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // ============================================
 // ICONS
 // ============================================

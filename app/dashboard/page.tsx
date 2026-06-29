@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
+// Force dynamic rendering - disable static generation
+export const dynamic = 'force-dynamic';
+
 // Role to Dashboard URL mapping
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
   "College Admin": "http://16.112.236.67:3001/admin/students",
