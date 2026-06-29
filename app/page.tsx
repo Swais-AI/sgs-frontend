@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react";
 
-// Force dynamic rendering
+// Disable prerendering for login page too
 export const dynamic = 'force-dynamic';
 
 // ============================================

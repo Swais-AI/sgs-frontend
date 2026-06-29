@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
-// Force dynamic rendering - disable static generation
+// Disable all forms of prerendering for this page
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 // Role to Dashboard URL mapping
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
@@ -17,7 +17,6 @@ const ROLE_DASHBOARD_MAP: Record<string, string> = {
 };
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
   const router = useRouter();
   const [error, setError] = useState('');
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -53,15 +52,6 @@ export default function DashboardPage() {
     }
   }, [router, isRedirecting]);
 
-  // Show loading state while checking session
-  if (status === 'loading') {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center h-screen">
@@ -79,7 +69,10 @@ export default function DashboardPage() {
 
   return (
     <div className="flex justify-center items-center h-screen">
-      <p>Redirecting to your dashboard...</p>
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+        <p>Redirecting to your dashboard...</p>
+      </div>
     </div>
   );
 }
