@@ -54,6 +54,18 @@ function ChevronIcon() {
 }
 
 // ============================================
+// ROLE TO DASHBOARD URL MAPPING
+// ============================================
+
+const ROLE_DASHBOARD_MAP: Record<string, string> = {
+  "College Admin": "http://16.112.236.67:3001/admin/students",
+  "Headmaster": "http://16.112.236.67:3000",
+  "Faculty": "http://16.112.236.67:3002/dashboard",
+  "Student": "http://16.112.236.67:84/student/dashboard",
+  "Parent": "http://16.112.236.67:3009/parent/dashboard",
+};
+
+// ============================================
 // MAIN LOGIN PAGE
 // ============================================
 
@@ -72,7 +84,7 @@ export default function Home() {
   const [rememberMe, setRememberMe] = useState(false);
   const roleDropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // Handle outside click for dropdown - FIXED
+  // Handle outside click for dropdown
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
       if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
@@ -82,6 +94,10 @@ export default function Home() {
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
+
+  // ============================================
+  // HANDLE LOGIN WITH PROPER REDIRECTS
+  // ============================================
 
   const handleLogin = async () => {
     if (!selectedRole || selectedRole === "Select your role") {
@@ -103,15 +119,38 @@ export default function Home() {
     setMessage("");
 
     try {
+      // Store user data in sessionStorage for the dashboard
       sessionStorage.setItem('userRole', selectedRole);
-      sessionStorage.setItem('userEmail', email || phone);
+      sessionStorage.setItem('userEmail', email.trim() || phone.trim());
+      
+      // Get the dashboard URL for the selected role
+      const dashboardUrl = ROLE_DASHBOARD_MAP[selectedRole];
+      
+      if (!dashboardUrl) {
+        setMessage("Invalid role selected. Please try again.");
+        setIsLoading(false);
+        return;
+      }
 
+      // Store the dashboard URL for redirect after Google auth
+      sessionStorage.setItem('dashboardRedirectUrl', dashboardUrl);
+
+      // For local testing, you can skip Google auth and redirect directly
+      if (process.env.NODE_ENV === 'development') {
+        // For testing, just redirect directly
+        window.location.href = dashboardUrl;
+        return;
+      }
+
+      // For production - Google OAuth
       await signIn('google', {
         callbackUrl: '/dashboard',
+        redirect: true,
       });
+      
     } catch (error) {
+      console.error('Login error:', error);
       setMessage("Something went wrong. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };
