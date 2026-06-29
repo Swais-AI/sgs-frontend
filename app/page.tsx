@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react";
 
 // ============================================
-// ICONS - Exact same as SSS
+// ICONS
 // ============================================
 
 function MailIcon() {
@@ -54,14 +54,12 @@ function ChevronIcon() {
 }
 
 // ============================================
-// MAIN LOGIN PAGE - Exact SSS UI with SGS functionality
+// MAIN LOGIN PAGE
 // ============================================
 
 export default function Home() {
-  // SGS Role Options
   const roles = ["College Admin", "Headmaster", "Faculty", "Student", "Parent"];
   
-  // State
   const [method, setMethod] = useState("email");
   const [selectedRole, setSelectedRole] = useState("Select your role");
   const [isRoleOpen, setIsRoleOpen] = useState(false);
@@ -72,12 +70,12 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const roleDropdownRef = useRef(null);
+  const roleDropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // Handle outside click for dropdown
+  // Handle outside click for dropdown - FIXED
   useEffect(() => {
-    function handleOutsideClick(event) {
-      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target)) {
+    function handleOutsideClick(event: MouseEvent) {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
         setIsRoleOpen(false);
       }
     }
@@ -85,7 +83,6 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  // Handle Login - SGS functionality (Google OAuth + Role-based redirect)
   const handleLogin = async () => {
     if (!selectedRole || selectedRole === "Select your role") {
       setMessage("Please select your role.");
@@ -106,18 +103,9 @@ export default function Home() {
     setMessage("");
 
     try {
-      // Store role and email for redirect
       sessionStorage.setItem('userRole', selectedRole);
       sessionStorage.setItem('userEmail', email || phone);
 
-      // For local testing - show alert
-      if (process.env.NODE_ENV === 'development') {
-        alert(`Login attempted!\n\nEmail: ${email || phone}\nRole: ${selectedRole}\nRemember Me: ${rememberMe}`);
-        setIsLoading(false);
-        return;
-      }
-
-      // For production - Google OAuth
       await signIn('google', {
         callbackUrl: '/dashboard',
       });
@@ -126,15 +114,6 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSendOTP = async () => {
-    if (!phone.trim()) {
-      setMessage("Please enter your phone number.");
-      return;
-    }
-    setPhoneStep("otp");
-    setMessage("OTP sent to your phone.");
   };
 
   const isFormValid = () => {
@@ -158,7 +137,6 @@ export default function Home() {
 
   return (
     <main className="login-page">
-      {/* LEFT PANEL - Branding */}
       <section className="brand-panel" aria-label="SGS Portal">
         <div className="sky-shape top-shape" />
         <div className="dot-grid" aria-hidden="true" />
@@ -182,13 +160,11 @@ export default function Home() {
         <div className="sky-shape bottom-shape" />
       </section>
 
-      {/* RIGHT PANEL - Login Form */}
       <section className="form-panel" aria-label="Sign in form">
         <form className="login-card" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
           <div className="form-inner">
             <p className="section-title">Sign in with</p>
 
-            {/* Email / Phone Tabs */}
             <div className="tabs" role="tablist" aria-label="Sign in method">
               <button
                 className={`tab ${method === "email" ? "active" : ""}`}
@@ -218,7 +194,6 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Email or Phone Input */}
             {method === "email" ? (
               <label className="field-group">
                 <span>Email Address</span>
@@ -268,7 +243,6 @@ export default function Home() {
               </>
             )}
 
-            {/* Role Dropdown - SGS Roles */}
             <div className="field-group role-dropdown" ref={roleDropdownRef}>
               <span>Select Role</span>
               <button
@@ -305,10 +279,8 @@ export default function Home() {
               ) : null}
             </div>
 
-            {/* Message */}
             {message ? <p className="form-message" role="alert">{message}</p> : null}
 
-            {/* Remember Me */}
             <div className="form-links-row">
               <label className="remember">
                 <input 
@@ -320,7 +292,6 @@ export default function Home() {
               </label>
             </div>
 
-            {/* Submit Button */}
             <button 
               className="sign-in" 
               type="submit" 
@@ -330,12 +301,10 @@ export default function Home() {
               <span>{getButtonText()}</span>
             </button>
 
-            {/* OR Divider */}
             <div className="or-row">
               <span>or</span>
             </div>
 
-            {/* Footer */}
             <p className="administrator">
               Don't have an account? <strong>Contact your administrator</strong>
             </p>
