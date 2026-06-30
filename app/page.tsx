@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react";
 
-// Disable prerendering for login page too
+// Disable prerendering for login page
 export const dynamic = 'force-dynamic';
 
 // ============================================
@@ -69,6 +69,42 @@ const ROLE_DASHBOARD_MAP: Record<string, string> = {
 };
 
 // ============================================
+// EMAIL VALIDATION FUNCTION
+// ============================================
+
+async function validateUserEmail(email: string, role: string): Promise<{ isValid: boolean; message: string }> {
+  try {
+    const response = await fetch('/api/auth/check-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        email: email.trim(), 
+        role: role 
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.valid) {
+      return { isValid: true, message: '' };
+    } else {
+      return { 
+        isValid: false, 
+        message: data.message || `No ${role} found with this email. Please contact your administrator.` 
+      };
+    }
+  } catch (error) {
+    console.error('Email validation error:', error);
+    return { 
+      isValid: false, 
+      message: 'Unable to validate email. Please try again.' 
+    };
+  }
+}
+
+// ============================================
 // MAIN LOGIN PAGE
 // ============================================
 
@@ -99,10 +135,12 @@ export default function Home() {
   }, []);
 
   // ============================================
-  // HANDLE LOGIN WITH PROPER REDIRECTS
+  // HANDLE LOGIN WITH EMAIL VALIDATION
   // ============================================
 
   const handleLogin = async () => {
+    setMessage("");
+
     if (!selectedRole || selectedRole === "Select your role") {
       setMessage("Please select your role.");
       return;
@@ -119,14 +157,21 @@ export default function Home() {
     }
 
     setIsLoading(true);
-    setMessage("");
 
     try {
-      // Store user data in sessionStorage
-      sessionStorage.setItem('userRole', selectedRole);
-      sessionStorage.setItem('userEmail', email.trim() || phone.trim());
+      // Validate user email against database
+      const validation = await validateUserEmail(email.trim(), selectedRole);
       
-      // Get the dashboard URL for the selected role
+      if (!validation.isValid) {
+        setMessage(validation.message);
+        setIsLoading(false);
+        return;
+      }
+
+      // Email is valid - proceed with login
+      sessionStorage.setItem('userRole', selectedRole);
+      sessionStorage.setItem('userEmail', email.trim());
+      
       const dashboardUrl = ROLE_DASHBOARD_MAP[selectedRole];
       
       if (!dashboardUrl) {
@@ -135,19 +180,13 @@ export default function Home() {
         return;
       }
 
-      // Store the dashboard URL for redirect after Google auth
       sessionStorage.setItem('dashboardRedirectUrl', dashboardUrl);
 
-      // Check if we're in development or production
-      const isDev = process.env.NODE_ENV === 'development';
-      
-      if (isDev) {
-        // In development, redirect directly (skip Google auth for testing)
+      if (process.env.NODE_ENV === 'development') {
         window.location.href = dashboardUrl;
         return;
       }
 
-      // Production - Google OAuth
       await signIn('google', {
         callbackUrl: '/dashboard',
         redirect: true,
@@ -323,7 +362,11 @@ export default function Home() {
               ) : null}
             </div>
 
-            {message ? <p className="form-message" role="alert">{message}</p> : null}
+            {message && (
+              <div className="form-message" role="alert">
+                {message}
+              </div>
+            )}
 
             <div className="form-links-row">
               <label className="remember">
