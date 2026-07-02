@@ -9,11 +9,11 @@ export const fetchCache = 'force-no-store';
 
 // Role to Dashboard URL mapping
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
-  "College Admin": "http://16.112.236.67:3001/admin/students",
-  "Headmaster": "http://16.112.236.67:3000",
-  "Faculty": "http://16.112.236.67:3002/dashboard",
-  "Student": "http://16.112.236.67:84/student/dashboard",
-  "Parent": "http://16.112.236.67:3009/parent/dashboard",
+  "College Admin": "https://staging.sgs.swais.in/admin/students",
+  "Headmaster":    "http://16.112.236.67:3000",
+  "Faculty":       "https://staging.sgs.swais.in/dashboard",
+  "Student":       "https://staging.sgs.swais.in/student/dashboard",
+  "Parent":        "https://staging.sgs.swais.in/parent/dashboard",
 };
 
 export default function DashboardPage() {
