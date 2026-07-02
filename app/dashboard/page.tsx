@@ -22,13 +22,12 @@ export default function DashboardPage() {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    // Skip if already redirecting
     if (isRedirecting) return;
-    
+
     const userRole = sessionStorage.getItem('userRole');
     const dashboardUrl = sessionStorage.getItem('dashboardRedirectUrl');
-    
-    // If no role, redirect to home
+    const userEmail = sessionStorage.getItem('userEmail');
+
     if (!userRole) {
       router.push('/');
       return;
@@ -36,19 +35,34 @@ export default function DashboardPage() {
 
     setIsRedirecting(true);
 
-    // If we have a stored dashboard URL, use it
-    if (dashboardUrl) {
-      window.location.href = dashboardUrl;
+    const targetUrl = dashboardUrl || ROLE_DASHBOARD_MAP[userRole];
+
+    if (!targetUrl) {
+      setError('Invalid role selected. Please contact administrator.');
+      setIsRedirecting(false);
       return;
     }
 
-    // Otherwise, use the mapping
-    const url = ROLE_DASHBOARD_MAP[userRole];
-    if (url) {
-      window.location.href = url;
+    // SSO token handoff for Faculty role
+    if (userRole === 'Faculty' && userEmail) {
+      fetch('/api/sso-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.access_token) {
+            window.location.href = `${targetUrl}?token=${encodeURIComponent(data.access_token)}`;
+          } else {
+            window.location.href = targetUrl;
+          }
+        })
+        .catch(() => {
+          window.location.href = targetUrl;
+        });
     } else {
-      setError('Invalid role selected. Please contact administrator.');
-      setIsRedirecting(false);
+      window.location.href = targetUrl;
     }
   }, [router, isRedirecting]);
 
