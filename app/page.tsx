@@ -63,7 +63,7 @@ function ChevronIcon() {
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
   "College Admin": "https://staging.sgs.swais.in/admin/students",
   "Headmaster":    "http://16.112.236.67:3000",
-  "Faculty":       "https://staging.sgs.swais.in/dashboard",
+  "Faculty":       "https://staging.sgs.swais.in/faculty/dashboard",
   "Student":       "https://staging.sgs.swais.in/student/dashboard",
   "Parent":        "https://staging.sgs.swais.in/parent/dashboard",
 };
