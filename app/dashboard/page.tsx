@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 // Disable all forms of prerendering for this page
 export const dynamic = 'force-dynamic';
@@ -18,15 +19,20 @@ const ROLE_DASHBOARD_MAP: Record<string, string> = {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [error, setError] = useState('');
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
+    // Wait for NextAuth session to resolve
+    if (status === 'loading') return;
     if (isRedirecting) return;
 
     const userRole = sessionStorage.getItem('userRole');
     const dashboardUrl = sessionStorage.getItem('dashboardRedirectUrl');
-    const userEmail = sessionStorage.getItem('userEmail');
+
+    // Use Google-authenticated email (reliable) instead of typed email
+    const userEmail = session?.user?.email || sessionStorage.getItem('userEmail');
 
     if (!userRole) {
       router.push('/');
@@ -64,7 +70,7 @@ export default function DashboardPage() {
     } else {
       window.location.href = targetUrl;
     }
-  }, [router, isRedirecting]);
+  }, [router, isRedirecting, session, status]);
 
   if (error) {
     return (
