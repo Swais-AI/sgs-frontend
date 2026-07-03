@@ -11,7 +11,7 @@ export const fetchCache = 'force-no-store';
 // Role to Dashboard URL mapping
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
   "College Admin": "https://staging.sgs.swais.in/admin/students",
-  "Headmaster":    "http://16.112.236.67:3000",
+  "Headmaster":    "https://staging.sgs.swais.in/headmaster",
   "Faculty":       "https://staging.sgs.swais.in/faculty/dashboard",
   "Student":       "https://staging.sgs.swais.in/student",
   "Parent":        "https://staging.sgs.swais.in/parent/dashboard",
