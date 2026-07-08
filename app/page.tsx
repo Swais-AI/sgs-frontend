@@ -19,14 +19,6 @@ function MailIcon() {
   );
 }
 
-function PhoneIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8.1 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.6 1.9Z" />
-    </svg>
-  );
-}
-
 function UsersIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -56,12 +48,22 @@ function ChevronIcon() {
   );
 }
 
+function CapIcon() {
+  return (
+    <svg className="cap-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 8.5 12 4l9 4.5-9 4.5-9-4.5Z" />
+      <path d="M7 11v4.5c1.5 1.2 3.2 1.8 5 1.8s3.5-.6 5-1.8V11" />
+      <path d="M21 9v5" />
+    </svg>
+  );
+}
+
 // ============================================
 // ROLE TO DASHBOARD URL MAPPING
 // ============================================
 
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
-  "College Admin": "https://staging.sgs.swais.in/admin/students",
+  "School Admin": "https://staging.sgs.swais.in/admin/students",
   "Headmaster":    "https://staging.sgs.swais.in/headmaster",
   "Faculty":       "https://staging.sgs.swais.in/faculty/dashboard",
   "Student":       "https://staging.sgs.swais.in/student",
@@ -109,18 +111,13 @@ async function validateUserEmail(email: string, role: string): Promise<{ isValid
 // ============================================
 
 export default function Home() {
-  const roles = ["College Admin", "Headmaster", "Faculty", "Student", "Parent"];
+  const roles = ["School Admin", "Headmaster", "Faculty", "Student", "Parent"];
   
-  const [method, setMethod] = useState("email");
   const [selectedRole, setSelectedRole] = useState("Select your role");
   const [isRoleOpen, setIsRoleOpen] = useState(false);
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [phoneStep, setPhoneStep] = useState("phone");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
   const roleDropdownRef = useRef<HTMLDivElement | null>(null);
 
   // Handle outside click for dropdown
@@ -146,13 +143,8 @@ export default function Home() {
       return;
     }
 
-    if (method === "email" && !email.trim()) {
+    if (!email.trim()) {
       setMessage("Please enter your email address.");
-      return;
-    }
-
-    if (method === "phone" && !phone.trim()) {
-      setMessage("Please enter your phone number.");
       return;
     }
 
@@ -201,20 +193,11 @@ export default function Home() {
 
   const isFormValid = () => {
     if (selectedRole === "Select your role") return false;
-    if (method === "email") return email.trim() !== "";
-    if (method === "phone") {
-      if (phoneStep === "phone") return phone.trim() !== "";
-      return otp.trim() !== "";
-    }
-    return false;
+    return email.trim() !== "";
   };
 
   const getButtonText = () => {
     if (isLoading) return "Please wait...";
-    if (method === "phone") {
-      if (phoneStep === "otp") return "Verify OTP";
-      return "Send OTP";
-    }
     return "Continue";
   };
 
@@ -230,9 +213,20 @@ export default function Home() {
             src="/assets/sgs-logo.png" 
             alt="SGS logo"
           />
-          <h1>SGS PORTAL</h1>
-          <div className="gold-divider" aria-hidden="true" />
-          <p className="tagline">Smart. Global. Secure.</p>
+          <div className="school-lockup" aria-label="SGS Senior Secondary School Shreeramnagar">
+            <h1>SGS SENIOR SECONDARY SCHOOL</h1>
+            <div className="school-location">
+              <span aria-hidden="true" />
+              <strong>SHREERAMNAGAR</strong>
+              <span aria-hidden="true" />
+            </div>
+            <div className="school-icon-row">
+              <span aria-hidden="true" />
+              <CapIcon />
+              <span aria-hidden="true" />
+            </div>
+            <p className="portal-welcome">Welcome to SGS Portal</p>
+          </div>
         </div>
 
         <img 
@@ -246,88 +240,33 @@ export default function Home() {
       <section className="form-panel" aria-label="Sign in form">
         <form className="login-card" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
           <div className="form-inner">
-            <p className="section-title">Sign in with</p>
-
-            <div className="tabs" role="tablist" aria-label="Sign in method">
-              <button
-                className={`tab ${method === "email" ? "active" : ""}`}
-                type="button"
-                role="tab"
-                aria-selected={method === "email"}
-                onClick={() => {
-                  setMethod("email");
-                  setMessage("");
-                }}
-              >
-                <MailIcon />
-                <span>Email</span>
-              </button>
-              <button
-                className={`tab ${method === "phone" ? "active" : ""}`}
-                type="button"
-                role="tab"
-                aria-selected={method === "phone"}
-                onClick={() => {
-                  setMethod("phone");
-                  setMessage("");
-                }}
-              >
-                <PhoneIcon />
-                <span>Phone Number</span>
-              </button>
+            <div className="section-title" aria-label="Sign in to access your account">
+              <span aria-hidden="true" />
+              <p>Sign in to access your account</p>
+              <span aria-hidden="true" />
             </div>
 
-            {method === "email" ? (
-              <label className="field-group">
-                <span>Email Address</span>
-                <span className="input-wrap">
-                  <MailIcon />
-                  <input
-                    type="email"
-                    placeholder="Enter your email address"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    disabled={isLoading}
-                  />
-                </span>
-              </label>
-            ) : (
-              <>
-                <label className="field-group">
-                  <span>Phone Number</span>
-                  <span className="input-wrap">
-                    <PhoneIcon />
-                    <input
-                      type="tel"
-                      placeholder="Enter your phone number"
-                      value={phone}
-                      onChange={(event) => setPhone(event.target.value)}
-                      disabled={isLoading || phoneStep !== "phone"}
-                    />
-                  </span>
-                </label>
-                {phoneStep === "otp" ? (
-                  <label className="field-group">
-                    <span>OTP</span>
-                    <span className="input-wrap">
-                      <LockIcon />
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={6}
-                        placeholder="Enter OTP"
-                        value={otp}
-                        onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))}
-                        disabled={isLoading}
-                      />
-                    </span>
-                  </label>
-                ) : null}
-              </>
-            )}
+            <label className="field-group">
+              <span>
+                Email Address <strong className="required-marker">*</strong>
+              </span>
+              <span className="input-wrap">
+                <MailIcon />
+                <input
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  disabled={isLoading}
+                  required
+                />
+              </span>
+            </label>
 
             <div className="field-group role-dropdown" ref={roleDropdownRef}>
-              <span>Select Role</span>
+              <span>
+                Select Role <strong className="required-marker">*</strong>
+              </span>
               <button
                 className={`select-box ${isRoleOpen ? "open" : ""}`}
                 type="button"
@@ -368,17 +307,6 @@ export default function Home() {
               </div>
             )}
 
-            <div className="form-links-row">
-              <label className="remember">
-                <input 
-                  type="checkbox" 
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                <span>Remember me</span>
-              </label>
-            </div>
-
             <button 
               className="sign-in" 
               type="submit" 
@@ -393,13 +321,13 @@ export default function Home() {
             </div>
 
             <p className="administrator">
-              Don't have an account? <strong>Contact your administrator</strong>
+              Don't have an account. <strong>Contact SWAIS administrator.</strong>
             </p>
           </div>
         </form>
 
         <footer className="footer">
-          <span>&copy; 2024 SGS Portal. All rights reserved.</span>
+          <span>&copy; 2026 SGS Portal. All rights reserved.</span>
           <span className="footer-link">Privacy Policy</span>
           <span className="footer-link">Terms of Use</span>
         </footer>

@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 // Role to Dashboard URL mapping
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
-  "College Admin": "http://16.112.236.67:3001/admin/students",
+  "School Admin": "http://16.112.236.67:3001/admin/students",
   "Headmaster": "http://16.112.236.67:3000",
   "Faculty": "http://16.112.236.67:3002/dashboard",
   "Student": "http://16.112.236.67:84/student/dashboard",

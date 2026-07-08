@@ -13,7 +13,7 @@ const pool = new Pool({
 
 // Role to table and column mapping
 const ROLE_MAPPING: Record<string, { table: string; emailColumn: string; nameColumn: string }> = {
-  "College Admin": { table: "users_master", emailColumn: "email", nameColumn: "name" },
+  "School Admin": { table: "users_master", emailColumn: "email", nameColumn: "name" },
   "Headmaster": { table: "users_master", emailColumn: "email", nameColumn: "name" },
   "Faculty": { table: "sgs_teacher_master", emailColumn: "email_id", nameColumn: "full_name" },
   "Student": { table: "sgs_student_master", emailColumn: "student_email", nameColumn: "full_name" },
