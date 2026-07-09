@@ -7,8 +7,8 @@ import { createPortal } from "react-dom";
 const roles = [
   {
     value: "admin",
-    title: "College Admin",
-    description: "Manage college, users, content and academic activities.",
+    title: "School Admin",
+    description: "Manage school, users, content and academic activities.",
     icon: "AD",
   },
   {
