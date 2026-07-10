@@ -8,7 +8,7 @@ const pool = new Pool({
   password: process.env.PGPASSWORD,
   database: process.env.PGDATABASE,
   port: parseInt(process.env.PGPORT || '5432'),
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: { rejectUnauthorized: false } // RDS requires SSL in all environments (incl. local dev)
 });
 
 // Role to table and column mapping

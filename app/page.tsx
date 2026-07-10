@@ -48,16 +48,6 @@ function ChevronIcon() {
   );
 }
 
-function CapIcon() {
-  return (
-    <svg className="cap-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M3 8.5 12 4l9 4.5-9 4.5-9-4.5Z" />
-      <path d="M7 11v4.5c1.5 1.2 3.2 1.8 5 1.8s3.5-.6 5-1.8V11" />
-      <path d="M21 9v5" />
-    </svg>
-  );
-}
-
 // ============================================
 // ROLE TO DASHBOARD URL MAPPING
 // ============================================
@@ -203,135 +193,117 @@ export default function Home() {
 
   return (
     <main className="login-page">
-      <section className="brand-panel" aria-label="SGS Portal">
-        <div className="sky-shape top-shape" />
-        <div className="dot-grid" aria-hidden="true" />
-
-        <div className="brand-content">
-          <img 
-            className="school-logo" 
-            src="/assets/sgs-logo.png" 
-            alt="SGS logo"
-          />
-          <div className="school-lockup" aria-label="SGS Senior Secondary School Shreeramnagar">
-            <h1>SGS SENIOR SECONDARY SCHOOL</h1>
-            <div className="school-location">
-              <span aria-hidden="true" />
-              <strong>SHREERAMNAGAR</strong>
-              <span aria-hidden="true" />
-            </div>
-            <div className="school-icon-row">
-              <span aria-hidden="true" />
-              <CapIcon />
-              <span aria-hidden="true" />
-            </div>
-            <p className="portal-welcome">Welcome to SGS Portal</p>
+      <div className="scene">
+        {/* Welcome / glass side */}
+        <section className="hello" aria-label="SGS Portal">
+          <div className="crest-chip">
+            <img src="/assets/sgs-logo.png" alt="SGS logo" />
           </div>
-        </div>
+          <h1>SGS Senior Secondary School</h1>
+          <div className="hello-loc">
+            <span aria-hidden="true" />
+            <strong>SHREERAMNAGAR</strong>
+          </div>
+          <p className="hello-tag">
+            Your all-in-one AI-powered school portal — for students, teachers,
+            parents, and administration.
+          </p>
+          <div className="hello-badges">
+            <span>🔒 Secure Portal</span>
+            <span>⚡ AI-Powered</span>
+          </div>
+        </section>
 
-        <img 
-          className="campus-art" 
-          src="/assets/campus-hero.png" 
-          alt="Students walking toward a bright school campus" 
-        />
-        <div className="sky-shape bottom-shape" />
-      </section>
+        {/* Form card side */}
+        <form className="card" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+          <h2 className="welcome-heading">Welcome Back</h2>
+          <p className="welcome-sub">Sign in to access your account</p>
 
-      <section className="form-panel" aria-label="Sign in form">
-        <form className="login-card" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
-          <div className="form-inner">
-            <div className="section-title" aria-label="Sign in to access your account">
-              <span aria-hidden="true" />
-              <p>Sign in to access your account</p>
-              <span aria-hidden="true" />
-            </div>
-
-            <label className="field-group">
-              <span>
-                Email Address <strong className="required-marker">*</strong>
-              </span>
-              <span className="input-wrap">
-                <MailIcon />
-                <input
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  disabled={isLoading}
-                  required
-                />
-              </span>
-            </label>
-
-            <div className="field-group role-dropdown" ref={roleDropdownRef}>
-              <span>
-                Select Role <strong className="required-marker">*</strong>
-              </span>
-              <button
-                className={`select-box ${isRoleOpen ? "open" : ""}`}
-                type="button"
-                aria-expanded={isRoleOpen}
+          <label className="field-group">
+            <span>
+              Email Address <strong className="required-marker">*</strong>
+            </span>
+            <span className="input-wrap">
+              <MailIcon />
+              <input
+                type="email"
+                placeholder="Enter your email address"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
                 disabled={isLoading}
-                onClick={() => setIsRoleOpen((current) => !current)}
-              >
-                <span className="select-label">
-                  <UsersIcon />
-                  <span id="selectedRole">{selectedRole}</span>
-                </span>
-                <ChevronIcon />
-              </button>
-              {isRoleOpen ? (
-                <div className="role-menu" role="listbox" aria-label="Role options">
-                  {roles.map((role) => (
-                    <button
-                      className={`role-menu-option ${selectedRole === role ? "selected" : ""}`}
-                      key={role}
-                      type="button"
-                      role="option"
-                      aria-selected={selectedRole === role}
-                      onClick={() => {
-                        setSelectedRole(role);
-                        setIsRoleOpen(false);
-                      }}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+                required
+              />
+            </span>
+          </label>
 
-            {message && (
-              <div className="form-message" role="alert">
-                {message}
-              </div>
-            )}
-
-            <button 
-              className="sign-in" 
-              type="submit" 
-              disabled={isLoading || !isFormValid()}
+          <div className="field-group role-dropdown" ref={roleDropdownRef}>
+            <span>
+              Select Role <strong className="required-marker">*</strong>
+            </span>
+            <button
+              className={`select-box ${isRoleOpen ? "open" : ""}`}
+              type="button"
+              aria-expanded={isRoleOpen}
+              disabled={isLoading}
+              onClick={() => setIsRoleOpen((current) => !current)}
             >
-              {isLoading ? <span className="loader" aria-hidden="true" /> : <LockIcon />}
-              <span>{getButtonText()}</span>
+              <span className="select-label">
+                <UsersIcon />
+                <span id="selectedRole">{selectedRole}</span>
+              </span>
+              <ChevronIcon />
             </button>
-
-            <div className="or-row">
-              <span>or</span>
-            </div>
-
-            <p className="administrator">
-              Don't have an account. <strong>Contact SWAIS administrator.</strong>
-            </p>
+            {isRoleOpen ? (
+              <div className="role-menu" role="listbox" aria-label="Role options">
+                {roles.map((role) => (
+                  <button
+                    className={`role-menu-option ${selectedRole === role ? "selected" : ""}`}
+                    key={role}
+                    type="button"
+                    role="option"
+                    aria-selected={selectedRole === role}
+                    onClick={() => {
+                      setSelectedRole(role);
+                      setIsRoleOpen(false);
+                    }}
+                  >
+                    {role}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
-        </form>
 
-        <footer className="footer">
-          <span>&copy; 2026 SGS Portal. All rights reserved.</span>
-          <span className="footer-link">Privacy Policy</span>
-          <span className="footer-link">Terms of Use</span>
-        </footer>
-      </section>
+          {message && (
+            <div className="form-message" role="alert">
+              {message}
+            </div>
+          )}
+
+          <button
+            className="sign-in"
+            type="submit"
+            disabled={isLoading || !isFormValid()}
+          >
+            {isLoading ? <span className="loader" aria-hidden="true" /> : <LockIcon />}
+            <span>{getButtonText()}</span>
+          </button>
+
+          <div className="or-row">
+            <span>or</span>
+          </div>
+
+          <p className="administrator">
+            Don't have an account. <strong>Contact SWAIS administrator.</strong>
+          </p>
+        </form>
+      </div>
+
+      <footer className="page-footer">
+        <span>&copy; 2026 SGS Portal. All rights reserved.</span>
+        <span className="footer-link">Privacy Policy</span>
+        <span className="footer-link">Terms of Use</span>
+      </footer>
     </main>
   );
 }
