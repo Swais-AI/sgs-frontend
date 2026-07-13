@@ -34,6 +34,9 @@ Use `.env.example` as the source of truth for required variables.
 - `AUTH_GOOGLE_SECRET`: Google OAuth client secret
 - `DATABASE_URL`: preferred Postgres connection string
 - `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`: optional discrete Postgres settings when `DATABASE_URL` is not supplied
+- `SGS_BACKEND_URL`: backend API base URL used for SSO token handoff, without a trailing API path
+- `SGS_SSO_SECRET`: shared secret sent to the backend SSO token endpoint
+- `NEXT_PUBLIC_*_DASHBOARD_URL`: role-specific dashboard URLs used after login
 
 ## Deployment Notes
 
