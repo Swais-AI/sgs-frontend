@@ -10,11 +10,11 @@ export const fetchCache = 'force-no-store';
 
 // Role to Dashboard URL mapping
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
-  "School Admin": "https://staging.sgs.swais.in/admin/students",
-  "Headmaster":    "https://staging.sgs.swais.in/headmaster",
-  "Faculty":       "https://staging.sgs.swais.in/faculty/dashboard",
-  "Student":       "https://staging.sgs.swais.in/student",
-  "Parent":        "https://staging.sgs.swais.in/parent/dashboard",
+  "School Admin": process.env.NEXT_PUBLIC_SCHOOL_ADMIN_DASHBOARD_URL || "https://staging.sgs.swais.in/admin/students",
+  "Headmaster":    process.env.NEXT_PUBLIC_HEADMASTER_DASHBOARD_URL || "https://staging.sgs.swais.in/headmaster",
+  "Faculty":       process.env.NEXT_PUBLIC_FACULTY_DASHBOARD_URL || "https://staging.sgs.swais.in/faculty/dashboard",
+  "Student":       process.env.NEXT_PUBLIC_STUDENT_DASHBOARD_URL || "https://staging.sgs.swais.in/student",
+  "Parent":        process.env.NEXT_PUBLIC_PARENT_DASHBOARD_URL || "https://staging.sgs.swais.in/parent/dashboard",
 };
 
 export default function DashboardPage() {

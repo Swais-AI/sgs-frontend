@@ -19,6 +19,14 @@ function MailIcon() {
   );
 }
 
+function PhoneIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8.1 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.6 1.9Z" />
+    </svg>
+  );
+}
+
 function UsersIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -63,11 +71,11 @@ function CapIcon() {
 // ============================================
 
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
-  "School Admin": "https://staging.sgs.swais.in/admin/students",
-  "Headmaster":    "https://staging.sgs.swais.in/headmaster",
-  "Faculty":       "https://staging.sgs.swais.in/faculty/dashboard",
-  "Student":       "https://staging.sgs.swais.in/student",
-  "Parent":        "https://staging.sgs.swais.in/parent/dashboard",
+  "School Admin": process.env.NEXT_PUBLIC_SCHOOL_ADMIN_DASHBOARD_URL || "https://staging.sgs.swais.in/admin/students",
+  "Headmaster":    process.env.NEXT_PUBLIC_HEADMASTER_DASHBOARD_URL || "https://staging.sgs.swais.in/headmaster",
+  "Faculty":       process.env.NEXT_PUBLIC_FACULTY_DASHBOARD_URL || "https://staging.sgs.swais.in/faculty/dashboard",
+  "Student":       process.env.NEXT_PUBLIC_STUDENT_DASHBOARD_URL || "https://staging.sgs.swais.in/student",
+  "Parent":        process.env.NEXT_PUBLIC_PARENT_DASHBOARD_URL || "https://staging.sgs.swais.in/parent/dashboard",
 };
 
 // ============================================
@@ -106,6 +114,38 @@ async function validateUserEmail(email: string, role: string): Promise<{ isValid
   }
 }
 
+async function validateUserPhone(phone: string, role: string): Promise<{ isValid: boolean; message: string }> {
+  try {
+    const response = await fetch('/api/auth/check-phone', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        phone: phone.trim(),
+        role: role
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.valid) {
+      return { isValid: true, message: '' };
+    }
+
+    return {
+      isValid: false,
+      message: data.message || `No ${role} found with this phone number. Please contact your administrator.`
+    };
+  } catch (error) {
+    console.error('Phone validation error:', error);
+    return {
+      isValid: false,
+      message: 'Unable to validate phone number. Please try again.'
+    };
+  }
+}
+
 // ============================================
 // MAIN LOGIN PAGE
 // ============================================
@@ -113,9 +153,11 @@ async function validateUserEmail(email: string, role: string): Promise<{ isValid
 export default function Home() {
   const roles = ["School Admin", "Headmaster", "Faculty", "Student", "Parent"];
   
+  const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
   const [selectedRole, setSelectedRole] = useState("Select your role");
   const [isRoleOpen, setIsRoleOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const roleDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -143,16 +185,22 @@ export default function Home() {
       return;
     }
 
-    if (!email.trim()) {
+    if (loginMethod === "email" && !email.trim()) {
       setMessage("Please enter your email address.");
+      return;
+    }
+
+    if (loginMethod === "phone" && !phone.trim()) {
+      setMessage("Please enter your phone number.");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // Validate user email against database
-      const validation = await validateUserEmail(email.trim(), selectedRole);
+      const validation = loginMethod === "email"
+        ? await validateUserEmail(email.trim(), selectedRole)
+        : await validateUserPhone(phone.trim(), selectedRole);
       
       if (!validation.isValid) {
         setMessage(validation.message);
@@ -162,7 +210,13 @@ export default function Home() {
 
       // Email is valid - proceed with login
       sessionStorage.setItem('userRole', selectedRole);
-      sessionStorage.setItem('userEmail', email.trim());
+      if (loginMethod === "email") {
+        sessionStorage.setItem('userEmail', email.trim());
+        sessionStorage.removeItem('userPhone');
+      } else {
+        sessionStorage.setItem('userPhone', phone.trim());
+        sessionStorage.removeItem('userEmail');
+      }
       
       const dashboardUrl = ROLE_DASHBOARD_MAP[selectedRole];
       
@@ -193,7 +247,7 @@ export default function Home() {
 
   const isFormValid = () => {
     if (selectedRole === "Select your role") return false;
-    return email.trim() !== "";
+    return loginMethod === "email" ? email.trim() !== "" : phone.trim() !== "";
   };
 
   const getButtonText = () => {
@@ -246,22 +300,73 @@ export default function Home() {
               <span aria-hidden="true" />
             </div>
 
-            <label className="field-group">
-              <span>
-                Email Address <strong className="required-marker">*</strong>
-              </span>
-              <span className="input-wrap">
+            <div className="tabs" role="tablist" aria-label="Sign in method">
+              <button
+                className={`tab ${loginMethod === "email" ? "active" : ""}`}
+                type="button"
+                role="tab"
+                aria-selected={loginMethod === "email"}
+                disabled={isLoading}
+                onClick={() => {
+                  setLoginMethod("email");
+                  setMessage("");
+                }}
+              >
                 <MailIcon />
-                <input
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  disabled={isLoading}
-                  required
-                />
-              </span>
-            </label>
+                <span>Email</span>
+              </button>
+              <button
+                className={`tab ${loginMethod === "phone" ? "active" : ""}`}
+                type="button"
+                role="tab"
+                aria-selected={loginMethod === "phone"}
+                disabled={isLoading}
+                onClick={() => {
+                  setLoginMethod("phone");
+                  setMessage("");
+                }}
+              >
+                <PhoneIcon />
+                <span>Phone Number</span>
+              </button>
+            </div>
+
+            {loginMethod === "email" ? (
+              <label className="field-group">
+                <span>
+                  Email Address <strong className="required-marker">*</strong>
+                </span>
+                <span className="input-wrap">
+                  <MailIcon />
+                  <input
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    disabled={isLoading}
+                    required
+                  />
+                </span>
+              </label>
+            ) : (
+              <label className="field-group">
+                <span>
+                  Phone Number <strong className="required-marker">*</strong>
+                </span>
+                <span className="input-wrap">
+                  <PhoneIcon />
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    placeholder="Enter your phone number"
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    disabled={isLoading}
+                    required
+                  />
+                </span>
+              </label>
+            )}
 
             <div className="field-group role-dropdown" ref={roleDropdownRef}>
               <span>

@@ -8,7 +8,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email required' }, { status: 400 });
     }
 
-    const res = await fetch(`${process.env.SGS_BACKEND_URL}/api/v1/auth/sso-token`, {
+    const backendUrl = process.env.SGS_BACKEND_URL;
+
+    if (!backendUrl) {
+      return NextResponse.json({ error: 'SGS_BACKEND_URL is not configured' }, { status: 500 });
+    }
+
+    const res = await fetch(`${backendUrl.replace(/\/$/, '')}/api/v1/auth/sso-token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
