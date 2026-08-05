@@ -1,29 +1,82 @@
-import { Pool } from "pg";
+// lib/db.ts - Shared database connection pool
 
-declare global {
-  var __sgsPool: Pool | undefined;
-}
+import { Pool } from 'pg';
 
-function createPool() {
-  const connectionString = process.env.DATABASE_URL;
+let pool: Pool | null = null;
 
-  if (connectionString) {
-    return new Pool({
-      connectionString,
+// Get or create the shared pool
+export function getPool(): Pool {
+  if (!pool) {
+    pool = new Pool({
+      host: process.env.PGHOST,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      database: process.env.PGDATABASE,
+      port: parseInt(process.env.PGPORT || '5432'),
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      max: 20, // Maximum connections in the pool
+      idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
+      connectionTimeoutMillis: 2000, // Timeout after 2 seconds
+    });
+
+    // Log pool events for debugging
+    pool.on('connect', () => {
+      console.log('🔌 New database connection established');
+    });
+
+    pool.on('remove', () => {
+      console.log('🔌 Database connection closed');
+    });
+
+    pool.on('error', (err) => {
+      console.error('⚠️ Database pool error:', err.message);
     });
   }
-
-  return new Pool({
-    host: process.env.PGHOST ?? "localhost",
-    port: Number(process.env.PGPORT ?? 5432),
-    user: process.env.PGUSER ?? "postgres",
-    password: process.env.PGPASSWORD ?? "",
-    database: process.env.PGDATABASE ?? "sgs_local",
-  });
+  return pool;
 }
 
-export const db = global.__sgsPool ?? createPool();
+// Close the pool (call this when the app shuts down)
+export async function closePool(): Promise<void> {
+  if (pool) {
+    try {
+      await pool.end();
+      pool = null;
+      console.log('🔌 Database pool closed');
+    } catch (error) {
+      console.error('Error closing pool:', error);
+    }
+  }
+}
 
-if (process.env.NODE_ENV !== "production") {
-  global.__sgsPool = db;
+// Helper function to get a client from the pool with automatic release
+export async function withClient<T>(
+  callback: (client: any) => Promise<T>
+): Promise<T> {
+  const pool = getPool();
+  const client = await pool.connect();
+  try {
+    return await callback(client);
+  } finally {
+    try {
+      client.release();
+    } catch (releaseError) {
+      // Ignore errors when releasing - connection may already be closed
+      console.log('Client already released or connection closed');
+    }
+  }
+}
+
+// Helper function to execute a query with automatic connection management
+export async function query(text: string, params?: any[]): Promise<any> {
+  const pool = getPool();
+  const client = await pool.connect();
+  try {
+    return await client.query(text, params);
+  } finally {
+    try {
+      client.release();
+    } catch (releaseError) {
+      // Ignore errors when releasing
+    }
+  }
 }
