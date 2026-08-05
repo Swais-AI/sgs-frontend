@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react";
+import { getDashboardUrl, getAllRoles } from '@/lib/role-mapping';
 
 // Disable prerendering for login page
 export const dynamic = 'force-dynamic';
@@ -218,7 +219,7 @@ export default function Home() {
         sessionStorage.removeItem('userEmail');
       }
       
-      const dashboardUrl = ROLE_DASHBOARD_MAP[selectedRole];
+      const dashboardUrl = getDashboardUrl(selectedRole);
       
       if (!dashboardUrl) {
         setMessage("Invalid role selected. Please try again.");

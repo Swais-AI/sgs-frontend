@@ -1,18 +1,11 @@
-// app/api/auth/check-phone/route.ts
+// app/api/auth/login-with-phone/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withClient } from '@/lib/db';
-import { getRoleMapping } from '@/lib/role-mapping';
+import { getRoleMapping, getDashboardUrl } from '@/lib/role-mapping';
 
-// Normalize phone number
 function normalizePhone(phone: string): string {
   return phone.replace(/[\s\-\(\)\.]/g, '');
-}
-
-// Validate phone number
-function isValidPhone(phone: string): boolean {
-  const cleaned = normalizePhone(phone);
-  return /^[6-9]\d{9}$/.test(cleaned) || /^[0-9]{10,15}$/.test(cleaned);
 }
 
 function phoneLookupValues(phone: string): string[] {
@@ -20,17 +13,12 @@ function phoneLookupValues(phone: string): string[] {
   if (!cleaned) return [];
 
   const values = [cleaned];
-  
-  // If it's a 10-digit number, try with +91 prefix
   if (cleaned.length === 10) {
     values.push(`+91${cleaned}`);
   }
-  
-  // If it starts with 91, try without
   if (cleaned.startsWith('91') && cleaned.length === 12) {
     values.push(cleaned.slice(2));
   }
-
   return Array.from(new Set(values));
 }
 
@@ -45,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     if (!phone || !role) {
       return NextResponse.json(
-        { valid: false, message: 'Phone number and role are required' },
+        { success: false, message: 'Phone number and role are required.' },
         { status: 400 }
       );
     }
@@ -53,23 +41,23 @@ export async function POST(request: NextRequest) {
     const mapping = getRoleMapping(role);
     if (!mapping) {
       return NextResponse.json(
-        { valid: false, message: 'Invalid role selected' },
+        { success: false, message: 'Invalid role selected.' },
         { status: 400 }
       );
     }
 
     const phoneValues = phoneLookupValues(phone);
-    if (phoneValues.length === 0 || !isValidPhone(phone)) {
+    if (phoneValues.length === 0) {
       return NextResponse.json(
-        { valid: false, message: 'Please enter a valid phone number.' },
+        { success: false, message: 'Please enter a valid phone number.' },
         { status: 400 }
       );
     }
 
-    const { table, phoneColumn } = mapping;
+    const { table, phoneColumn, nameColumn } = mapping;
     if (!isSafeIdentifier(table) || !isSafeIdentifier(phoneColumn)) {
       return NextResponse.json(
-        { valid: false, message: 'Phone login is not configured correctly.' },
+        { success: false, message: 'Phone login is not configured correctly.' },
         { status: 500 }
       );
     }
@@ -89,20 +77,30 @@ export async function POST(request: NextRequest) {
 
     if (result.rows.length === 0) {
       return NextResponse.json({
-        valid: false,
-        message: `No ${role} found with this phone number. Please contact your administrator.`
+        success: false,
+        message: `No ${role} found with this phone number.`
       });
     }
 
+    const user = result.rows[0];
+    const dashboardUrl = getDashboardUrl(role);
+
     return NextResponse.json({
-      valid: true,
-      message: 'User validated successfully',
-      user: result.rows[0]
+      success: true,
+      message: 'Login successful.',
+      user: {
+        id: user.user_id || user.teacher_id || user.student_id,
+        name: user[nameColumn] || user.full_name || user.name,
+        email: user.email || user.email_id || user.student_email,
+        phone: user[phoneColumn],
+        role: role,
+        dashboardUrl: dashboardUrl,
+      },
     });
   } catch (error) {
-    console.error('Phone validation error:', error);
+    console.error('Phone login error:', error);
     return NextResponse.json(
-      { valid: false, message: 'Unable to validate phone number. Please try again.' },
+      { success: false, message: 'Unable to login. Please try again.' },
       { status: 500 }
     );
   }

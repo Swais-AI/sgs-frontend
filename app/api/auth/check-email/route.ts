@@ -1,24 +1,8 @@
+// app/api/auth/check-email/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
-
-// Database connection pool
-const pool = new Pool({
-  host: process.env.PGHOST,
-  user: process.env.PGUSER,
-  password: process.env.PGPASSWORD,
-  database: process.env.PGDATABASE,
-  port: parseInt(process.env.PGPORT || '5432'),
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
-
-// Role to table and column mapping
-const ROLE_MAPPING: Record<string, { table: string; emailColumn: string; nameColumn: string }> = {
-  "School Admin": { table: "users_master", emailColumn: "email", nameColumn: "name" },
-  "Headmaster": { table: "users_master", emailColumn: "email", nameColumn: "name" },
-  "Faculty": { table: "sgs_teacher_master", emailColumn: "email_id", nameColumn: "full_name" },
-  "Student": { table: "sgs_student_master", emailColumn: "student_email", nameColumn: "full_name" },
-  "Parent": { table: "sgs_student_master", emailColumn: "student_email", nameColumn: "full_name" },
-};
+import { withClient } from '@/lib/db';
+import { RoleMapping, getRoleMapping } from '@/lib/role-mapping';
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the mapping for this role
-    const mapping = ROLE_MAPPING[role];
+    const mapping = getRoleMapping(role);
     if (!mapping) {
       return NextResponse.json(
         { valid: false, message: 'Invalid role selected' },
@@ -43,14 +27,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { table, emailColumn, nameColumn } = mapping;
+    const { table, emailColumn } = mapping;
     const emailLower = email.trim().toLowerCase();
 
     // Build the query dynamically
     const query = `SELECT * FROM ${table} WHERE ${emailColumn} = $1`;
     console.log('Query:', query, 'Email:', emailLower);
 
-    const result = await pool.query(query, [emailLower]);
+    // Use withClient for automatic connection management
+    const result = await withClient(async (client) => {
+      return await client.query(query, [emailLower]);
+    });
 
     console.log('Result rows:', result.rows.length);
 
