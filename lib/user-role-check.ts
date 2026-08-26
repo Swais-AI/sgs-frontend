@@ -14,10 +14,10 @@ export async function checkUserRoleInDB(email: string, role: string): Promise<{ 
     const lowerEmail = email.toLowerCase();
     console.log('🔍 Checking role for:', lowerEmail, 'with role:', role);
     
-    // ADMIN role - check users_master
+    // ADMIN role - check sgs_users_masters
     if (role === 'admin' || role === 'principal') {
       const userResult = await pool.query(
-        'SELECT user_id, email, role, is_active FROM users_master WHERE LOWER(email) = $1',
+        'SELECT user_id, email, role, is_active FROM sgs_users_masters WHERE LOWER(email) = $1',
         [lowerEmail]
       );
       

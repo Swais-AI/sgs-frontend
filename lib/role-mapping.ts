@@ -8,42 +8,53 @@ export type RoleMapping = {
   dashboardUrl: string;
 };
 
+// Dashboard URLs come from the environment so each deployment points at its own
+// host. The fallbacks are relative paths, which resolve against whatever domain
+// the login app is served from — never a hardcoded server address.
+const dashboardUrls = {
+  schoolAdmin: process.env.NEXT_PUBLIC_SCHOOL_ADMIN_DASHBOARD_URL || "/admin/students",
+  headmaster: process.env.NEXT_PUBLIC_HEADMASTER_DASHBOARD_URL || "/headmaster",
+  faculty: process.env.NEXT_PUBLIC_FACULTY_DASHBOARD_URL || "/faculty/dashboard",
+  student: process.env.NEXT_PUBLIC_STUDENT_DASHBOARD_URL || "/student",
+  parent: process.env.NEXT_PUBLIC_PARENT_DASHBOARD_URL || "/parent/dashboard",
+};
+
 // Role to table and column mapping
 const ROLE_MAPPING: Record<string, RoleMapping> = {
   "School Admin": {
-    table: "users_master",
+    table: "sgs_users_masters",
     emailColumn: "email",
     phoneColumn: "phone",
     nameColumn: "name",
-    dashboardUrl: "http://16.112.236.67:3001/admin/students"
+    dashboardUrl: dashboardUrls.schoolAdmin
   },
   "Headmaster": {
-    table: "users_master",
+    table: "sgs_users_masters",
     emailColumn: "email",
     phoneColumn: "phone",
     nameColumn: "name",
-    dashboardUrl: "http://16.112.236.67:3000"
+    dashboardUrl: dashboardUrls.headmaster
   },
   "Faculty": {
     table: "sgs_teacher_master",
     emailColumn: "email_id",
     phoneColumn: "phone",
     nameColumn: "full_name",
-    dashboardUrl: "http://16.112.236.67:3002/dashboard"
+    dashboardUrl: dashboardUrls.faculty
   },
   "Student": {
     table: "sgs_student_master",
     emailColumn: "student_email",
     phoneColumn: "student_phone",
     nameColumn: "full_name",
-    dashboardUrl: "http://16.112.236.67:84"
+    dashboardUrl: dashboardUrls.student
   },
   "Parent": {
     table: "sgs_student_master",
     emailColumn: "student_email",
     phoneColumn: "student_phone",
     nameColumn: "full_name",
-    dashboardUrl: "http://16.112.236.67:3009/parent/dashboard"
+    dashboardUrl: dashboardUrls.parent
   },
 };
 
