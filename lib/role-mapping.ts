@@ -23,16 +23,16 @@ const dashboardUrls = {
 const ROLE_MAPPING: Record<string, RoleMapping> = {
   "School Admin": {
     table: "sgs_users_masters",
-    emailColumn: "email",
-    phoneColumn: "phone",
-    nameColumn: "name",
+    emailColumn: "email_id",
+    phoneColumn: "mobile_no",
+    nameColumn: "full_name",
     dashboardUrl: dashboardUrls.schoolAdmin
   },
   "Headmaster": {
     table: "sgs_users_masters",
-    emailColumn: "email",
-    phoneColumn: "phone",
-    nameColumn: "name",
+    emailColumn: "email_id",
+    phoneColumn: "mobile_no",
+    nameColumn: "full_name",
     dashboardUrl: dashboardUrls.headmaster
   },
   "Faculty": {
