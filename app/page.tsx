@@ -358,10 +358,16 @@ export default function Home() {
                   <PhoneIcon />
                   <input
                     type="tel"
-                    inputMode="tel"
                     placeholder="Enter your phone number"
                     value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
+                    onChange={(event) => {
+                      // ✅ Only allow digits, max 10 characters
+                      const digitsOnly = event.target.value.replace(/\D/g, '').slice(0, 10);
+                      setPhone(digitsOnly);
+                    }}
+                    maxLength={10}
+                    inputMode="numeric"
+                    pattern="[0-9]{10}"
                     disabled={isLoading}
                     required
                   />
