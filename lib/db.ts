@@ -13,7 +13,12 @@ export function getPool(): Pool {
       password: process.env.PGPASSWORD,
       database: process.env.PGDATABASE,
       port: parseInt(process.env.PGPORT || '5432'),
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      // RDS requires SSL in every environment. Gating this on NODE_ENV broke
+      // local dev: `next dev` forces NODE_ENV=development regardless of .env,
+      // so the pool connected in plaintext and RDS refused it with
+      // "no pg_hba.conf entry ... no encryption". The other two pools
+      // (user-role-check.ts, student-access.ts) already connect unconditionally.
+      ssl: { rejectUnauthorized: false },
       max: 20, // Maximum connections in the pool
       idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
       connectionTimeoutMillis: 2000, // Timeout after 2 seconds
