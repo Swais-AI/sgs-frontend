@@ -17,6 +17,9 @@ const ROLE_DASHBOARD_MAP: Record<string, string> = {
   "Parent":        process.env.NEXT_PUBLIC_PARENT_DASHBOARD_URL || "https://staging.sgs.swais.in/parent/dashboard",
 };
 
+// Roles whose dashboard consumes a signed SSO token from the redirect URL.
+const SSO_ROLES = new Set(['Faculty', 'Parent']);
+
 export default function DashboardPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -49,12 +52,16 @@ export default function DashboardPage() {
       return;
     }
 
-    // SSO token handoff for Faculty role
-    if (userRole === 'Faculty' && userEmail) {
+    // SSO token handoff. Faculty and Parent dashboards identify the user from
+    // a signed token in the redirect; the others still read sessionStorage.
+    // Add a role here only once its dashboard verifies the token — an
+    // unexpected ?token= on a dashboard that ignores it is harmless, but
+    // there is no point minting one.
+    if (SSO_ROLES.has(userRole) && userEmail) {
       fetch('/api/sso-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail }),
+        body: JSON.stringify({ email: userEmail, role: userRole }),
       })
         .then(res => res.json())
         .then(data => {
