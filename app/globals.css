@@ -306,7 +306,10 @@ input:disabled {
   margin-top: 1.4rem;
 }
 
-.field-group > span {
+/* The label text only. `.input-wrap` is also a direct-child <span>, and
+   without the exclusion this rule outranks it and turns the input box into
+   display:block — which is what made the icon and placeholder sit high. */
+.field-group > span:not(.input-wrap) {
   display: block;
   margin-bottom: 0.55rem;
   font-size: 0.95rem;
@@ -360,10 +363,14 @@ input:disabled {
 .input-wrap input {
   flex: 1;
   min-width: 0;
+  height: 100%;
+  padding: 0;
   border: 0;
   outline: none;
   background: transparent;
   font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.2;
   color: var(--ink);
 }
 
