@@ -49,10 +49,14 @@ const ROLE_MAPPING: Record<string, RoleMapping> = {
     nameColumn: "full_name",
     dashboardUrl: dashboardUrls.student
   },
+  // Parents are their own records, linked to children through
+  // sgs_parent_student_map. This used to validate against the *student's*
+  // email in sgs_student_master, which meant a "parent" login resolved to a
+  // student_id and the parent dashboard had no way to know who the parent was.
   "Parent": {
-    table: "sgs_student_master",
-    emailColumn: "student_email",
-    phoneColumn: "student_phone",
+    table: "sgs_parent_master",
+    emailColumn: "email",
+    phoneColumn: "phone",
     nameColumn: "full_name",
     dashboardUrl: dashboardUrls.parent
   },
