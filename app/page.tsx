@@ -39,16 +39,6 @@ function UsersIcon() {
   );
 }
 
-function LockIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="5" y="11" width="14" height="10" rx="2" />
-      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-      <path d="M12 15v2" />
-    </svg>
-  );
-}
-
 function ChevronIcon() {
   return (
     <svg className="chevron" viewBox="0 0 24 24" aria-hidden="true">
@@ -57,12 +47,38 @@ function ChevronIcon() {
   );
 }
 
-function CapIcon() {
+function ShieldIcon() {
   return (
-    <svg className="cap-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M3 8.5 12 4l9 4.5-9 4.5-9-4.5Z" />
-      <path d="M7 11v4.5c1.5 1.2 3.2 1.8 5 1.8s3.5-.6 5-1.8V11" />
-      <path d="M21 9v5" />
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 3 5 6v5.5c0 4.3 3 8.3 7 9.5 4-1.2 7-5.2 7-9.5V6l-7-3Z" />
+      <path d="m9.2 12 2 2 3.6-3.8" />
+    </svg>
+  );
+}
+
+function BoltIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" />
+    </svg>
+  );
+}
+
+function LoginIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 17l5-5-5-5" />
+      <path d="M15 12H3" />
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+    </svg>
+  );
+}
+
+function ArrowRightIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 12h15" />
+      <path d="m13 6 6 6-6 6" />
     </svg>
   );
 }
@@ -258,192 +274,191 @@ export default function Home() {
 
   return (
     <main className="login-page">
-      <section className="brand-panel" aria-label="SGS Portal">
-        <div className="sky-shape top-shape" />
-        <div className="dot-grid" aria-hidden="true" />
-
-        <div className="brand-content">
-          <img 
-            className="school-logo" 
-            src="/assets/sgs-logo.png" 
-            alt="SGS logo"
-          />
-          <div className="school-lockup" aria-label="SGS Senior Secondary School Shreeramnagar">
-            <h1>SGS SENIOR SECONDARY SCHOOL</h1>
-            <div className="school-location">
+      <div className="scene">
+        {/* Brand / campus side */}
+        <section className="hero" aria-label="SGS Portal">
+          <div className="hero-inner">
+            <div className="crest-chip">
+              <img src="/assets/sgs-logo.png" alt="SGS logo" />
+            </div>
+            <h1>SGS Senior Secondary School</h1>
+            <div className="hero-loc">
               <span aria-hidden="true" />
               <strong>SHREERAMNAGAR</strong>
-              <span aria-hidden="true" />
             </div>
-            <div className="school-icon-row">
-              <span aria-hidden="true" />
-              <CapIcon />
-              <span aria-hidden="true" />
-            </div>
-            <p className="portal-welcome">Welcome to SGS Portal</p>
-          </div>
-        </div>
-
-        <img 
-          className="campus-art" 
-          src="/assets/campus-hero.png" 
-          alt="Students walking toward a bright school campus" 
-        />
-        <div className="sky-shape bottom-shape" />
-      </section>
-
-      <section className="form-panel" aria-label="Sign in form">
-        <form className="login-card" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
-          <div className="form-inner">
-            <div className="section-title" aria-label="Sign in to access your account">
-              <span aria-hidden="true" />
-              <p>Sign in to access your account</p>
-              <span aria-hidden="true" />
-            </div>
-
-            <div className="tabs" role="tablist" aria-label="Sign in method">
-              <button
-                className={`tab ${loginMethod === "email" ? "active" : ""}`}
-                type="button"
-                role="tab"
-                aria-selected={loginMethod === "email"}
-                disabled={isLoading}
-                onClick={() => {
-                  setLoginMethod("email");
-                  setMessage("");
-                }}
-              >
-                <MailIcon />
-                <span>Email</span>
-              </button>
-              <button
-                className={`tab ${loginMethod === "phone" ? "active" : ""}`}
-                type="button"
-                role="tab"
-                aria-selected={loginMethod === "phone"}
-                disabled={isLoading}
-                onClick={() => {
-                  setLoginMethod("phone");
-                  setMessage("");
-                }}
-              >
-                <PhoneIcon />
-                <span>Phone Number</span>
-              </button>
-            </div>
-
-            {loginMethod === "email" ? (
-              <label className="field-group">
-                <span>
-                  Email Address <strong className="required-marker">*</strong>
-                </span>
-                <span className="input-wrap">
-                  <MailIcon />
-                  <input
-                    type="email"
-                    placeholder="Enter your email address"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    disabled={isLoading}
-                    required
-                  />
-                </span>
-              </label>
-            ) : (
-              <label className="field-group">
-                <span>
-                  Phone Number <strong className="required-marker">*</strong>
-                </span>
-                <span className="input-wrap">
-                  <PhoneIcon />
-                  <input
-                    type="tel"
-                    placeholder="Enter your phone number"
-                    value={phone}
-                    onChange={(event) => {
-                      // ✅ Only allow digits, max 10 characters
-                      const digitsOnly = event.target.value.replace(/\D/g, '').slice(0, 10);
-                      setPhone(digitsOnly);
-                    }}
-                    maxLength={10}
-                    inputMode="numeric"
-                    pattern="[0-9]{10}"
-                    disabled={isLoading}
-                    required
-                  />
-                </span>
-              </label>
-            )}
-
-            <div className="field-group role-dropdown" ref={roleDropdownRef}>
-              <span>
-                Select Role <strong className="required-marker">*</strong>
-              </span>
-              <button
-                className={`select-box ${isRoleOpen ? "open" : ""}`}
-                type="button"
-                aria-expanded={isRoleOpen}
-                disabled={isLoading}
-                onClick={() => setIsRoleOpen((current) => !current)}
-              >
-                <span className="select-label">
-                  <UsersIcon />
-                  <span id="selectedRole">{selectedRole}</span>
-                </span>
-                <ChevronIcon />
-              </button>
-              {isRoleOpen ? (
-                <div className="role-menu" role="listbox" aria-label="Role options">
-                  {roles.map((role) => (
-                    <button
-                      className={`role-menu-option ${selectedRole === role ? "selected" : ""}`}
-                      key={role}
-                      type="button"
-                      role="option"
-                      aria-selected={selectedRole === role}
-                      onClick={() => {
-                        setSelectedRole(role);
-                        setIsRoleOpen(false);
-                      }}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-
-            {message && (
-              <div className="form-message" role="alert">
-                {message}
-              </div>
-            )}
-
-            <button 
-              className="sign-in" 
-              type="submit" 
-              disabled={isLoading || !isFormValid()}
-            >
-              {isLoading ? <span className="loader" aria-hidden="true" /> : <LockIcon />}
-              <span>{getButtonText()}</span>
-            </button>
-
-            <div className="or-row">
-              <span>or</span>
-            </div>
-
-            <p className="administrator">
-              Don't have an account. <strong>Contact SWAIS administrator.</strong>
+            <p className="hero-tag">
+              Your all-in-one AI-powered school portal for students, teachers,
+              parents, and administration.
             </p>
+            <div className="hero-badges">
+              <span className="hero-badge"><ShieldIcon />Secure Portal</span>
+              <i className="badge-sep" aria-hidden="true" />
+              <span className="hero-badge"><BoltIcon />AI-Powered</span>
+            </div>
           </div>
-        </form>
+          <p className="hero-motto" aria-hidden="true">
+            Learn <b>&middot;</b> Grow <b>&middot;</b> Build a Better Tomorrow
+          </p>
+        </section>
 
-        <footer className="footer">
-          <span>&copy; 2026 SGS Portal. All rights reserved.</span>
-          <span className="footer-link">Privacy Policy</span>
-          <span className="footer-link">Terms of Use</span>
-        </footer>
-      </section>
+        {/* Form card side */}
+        <div className="form-side">
+        <form className="card" aria-labelledby="welcome-heading" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+          <span className="wave" aria-hidden="true">👋</span>
+          <h2 className="welcome-heading" id="welcome-heading">Welcome Back!</h2>
+          <p className="welcome-sub">Sign in to access your account</p>
+
+          <div className="tabs" role="tablist" aria-label="Sign in method">
+            <button
+              className={`tab ${loginMethod === "email" ? "active" : ""}`}
+              type="button"
+              role="tab"
+              aria-selected={loginMethod === "email"}
+              disabled={isLoading}
+              onClick={() => {
+                setLoginMethod("email");
+                setMessage("");
+              }}
+            >
+              <MailIcon />
+              <span>Email</span>
+            </button>
+            <button
+              className={`tab ${loginMethod === "phone" ? "active" : ""}`}
+              type="button"
+              role="tab"
+              aria-selected={loginMethod === "phone"}
+              disabled={isLoading}
+              onClick={() => {
+                setLoginMethod("phone");
+                setMessage("");
+              }}
+            >
+              <PhoneIcon />
+              <span>Phone Number</span>
+            </button>
+          </div>
+
+          {loginMethod === "email" ? (
+            <label className="field-group">
+              <span>
+                Email Address <strong className="required-marker">*</strong>
+              </span>
+              <span className="input-wrap">
+                <MailIcon />
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  disabled={isLoading}
+                  required
+                />
+              </span>
+            </label>
+          ) : (
+            <label className="field-group">
+              <span>
+                Phone Number <strong className="required-marker">*</strong>
+              </span>
+              <span className="input-wrap">
+                <PhoneIcon />
+                <input
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  value={phone}
+                  onChange={(event) => {
+                    // ✅ Only allow digits, max 10 characters
+                    const digitsOnly = event.target.value.replace(/\D/g, '').slice(0, 10);
+                    setPhone(digitsOnly);
+                  }}
+                  maxLength={10}
+                  inputMode="numeric"
+                  pattern="[0-9]{10}"
+                  disabled={isLoading}
+                  required
+                />
+              </span>
+            </label>
+          )}
+
+          <div className="field-group role-dropdown" ref={roleDropdownRef}>
+            <span>
+              Select Role <strong className="required-marker">*</strong>
+            </span>
+            <button
+              className={`select-box ${isRoleOpen ? "open" : ""}`}
+              type="button"
+              aria-expanded={isRoleOpen}
+              disabled={isLoading}
+              onClick={() => setIsRoleOpen((current) => !current)}
+            >
+              <span className="select-label">
+                <UsersIcon />
+                {/* Presentational only — the underlying value stays "Select your role"
+                    so isFormValid() and the role mapping are untouched. */}
+                <span id="selectedRole" className={selectedRole === "Select your role" ? "is-placeholder" : ""}>
+                  {selectedRole === "Select your role" ? "Choose your role" : selectedRole}
+                </span>
+              </span>
+              <ChevronIcon />
+            </button>
+            {isRoleOpen ? (
+              <div className="role-menu" role="listbox" aria-label="Role options">
+                {roles.map((role) => (
+                  <button
+                    className={`role-menu-option ${selectedRole === role ? "selected" : ""}`}
+                    key={role}
+                    type="button"
+                    role="option"
+                    aria-selected={selectedRole === role}
+                    onClick={() => {
+                      setSelectedRole(role);
+                      setIsRoleOpen(false);
+                    }}
+                  >
+                    {role}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          {message && (
+            <div className="form-message" role="alert">
+              {message}
+            </div>
+          )}
+
+          <button
+            className="sign-in"
+            type="submit"
+            disabled={isLoading || !isFormValid()}
+          >
+            {isLoading ? <span className="loader" aria-hidden="true" /> : <LoginIcon />}
+            <span>{getButtonText()}</span>
+            {isLoading ? null : <ArrowRightIcon />}
+          </button>
+
+          <div className="or-row">
+            <span>OR</span>
+          </div>
+
+          <p className="administrator">
+            <ShieldIcon />
+            Don&apos;t have an account? <strong>Contact SWAIS administrator</strong>
+          </p>
+        </form>
+        </div>
+      </div>
+
+      <footer className="page-footer">
+        <span>&copy; 2026 SGS Portal. All rights reserved.</span>
+        <i aria-hidden="true">|</i>
+        <span className="footer-link">Privacy Policy</span>
+        <i aria-hidden="true">|</i>
+        <span className="footer-link">Terms of Use</span>
+      </footer>
     </main>
   );
 }
