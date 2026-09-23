@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withClient } from '@/lib/db';
-import { RoleMapping, getRoleMapping } from '@/lib/role-mapping';
+import { RoleMapping, getRoleMapping, checkAccountStatus } from '@/lib/role-mapping';
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,10 +48,19 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const user = result.rows[0];
+    const statusCheck = checkAccountStatus(mapping, user);
+    if (!statusCheck.allowed) {
+      return NextResponse.json({
+        valid: false,
+        message: statusCheck.message
+      });
+    }
+
     return NextResponse.json({
       valid: true,
       message: 'User validated successfully',
-      user: result.rows[0]
+      user
     });
 
   } catch (error) {

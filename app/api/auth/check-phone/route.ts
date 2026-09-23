@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withClient } from '@/lib/db';
-import { getRoleMapping } from '@/lib/role-mapping';
+import { getRoleMapping, checkAccountStatus } from '@/lib/role-mapping';
 
 // Normalize phone number
 function normalizePhone(phone: string): string {
@@ -94,10 +94,19 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const user = result.rows[0];
+    const statusCheck = checkAccountStatus(mapping, user);
+    if (!statusCheck.allowed) {
+      return NextResponse.json({
+        valid: false,
+        message: statusCheck.message
+      });
+    }
+
     return NextResponse.json({
       valid: true,
       message: 'User validated successfully',
-      user: result.rows[0]
+      user
     });
   } catch (error) {
     console.error('Phone validation error:', error);
