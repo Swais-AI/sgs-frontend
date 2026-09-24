@@ -6,7 +6,7 @@ const pool = new Pool({
   user: process.env.PGUSER || 'swais_app_user',
   password: process.env.PGPASSWORD || 'Swaisuser007',
   database: process.env.PGDATABASE || 'sgs_prod',
-  ssl: { rejectUnauthorized: false }
+  ssl: process.env.PGHOST === 'localhost' ? false : { rejectUnauthorized: false }
 });
 
 export async function checkUserRoleInDB(email: string, role: string): Promise<{ allowed: boolean; message?: string }> {

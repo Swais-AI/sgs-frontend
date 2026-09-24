@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Exchanges a Google-verified email for a signed dashboard token.
+ * Exchanges a Google-verified email OR OTP-verified phone for a signed dashboard token.
  *
  * Each dashboard backend mints and verifies its own tokens, so the login app
  * never shares a JWT secret between services — it only holds the SSO secret
  * that authorises it to *ask* for a token.
  *
- *   Faculty → SGS_BACKEND_URL + /api/v1/auth/sso-token   (existing)
- *   Parent  → SGS_PARENT_SSO_URL                          (full URL)
+ *   Faculty -> SGS_BACKEND_URL + /api/v1/auth/sso-token
+ *   Parent  -> SGS_PARENT_SSO_URL
  *
  * If a role's endpoint is not configured, respond with no token rather than
- * an error: the dashboard page then redirects without one, which is exactly
- * what happened before this route knew about that role.
+ * an error: the dashboard page then redirects without one.
  */
 
 type SsoTarget = { url: string } | null;
@@ -33,10 +32,11 @@ function resolveTarget(role: string | undefined): SsoTarget {
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, role } = await req.json();
+    const { email, phone, role } = await req.json();
 
-    if (!email) {
-      return NextResponse.json({ error: 'Email required' }, { status: 400 });
+    // Ensure AT LEAST ONE identifier is provided
+    if (!email && !phone) {
+      return NextResponse.json({ error: 'Email or Phone is required' }, { status: 400 });
     }
 
     const target = resolveTarget(role);
@@ -56,7 +56,8 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
         'X-SSO-Secret': process.env.SGS_SSO_SECRET || '',
       },
-      body: JSON.stringify({ email, role }),
+      // Pass both email and phone; the backend will use whichever is populated
+      body: JSON.stringify({ email, phone, role }),
     });
 
     if (!res.ok) {

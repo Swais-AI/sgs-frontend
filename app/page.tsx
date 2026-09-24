@@ -96,7 +96,7 @@ const ROLE_DASHBOARD_MAP: Record<string, string> = {
 };
 
 // ============================================
-// EMAIL VALIDATION FUNCTION
+// EMAIL & PHONE VALIDATION FUNCTIONS
 // ============================================
 
 async function validateUserEmail(email: string, role: string): Promise<{ isValid: boolean; message: string }> {
@@ -147,7 +147,7 @@ async function validateUserPhone(phone: string, role: string): Promise<{ isValid
     const data = await response.json();
 
     if (response.ok && data.valid) {
-      return { isValid: true, message: '' };
+      return { isValid: true, message: data.message || '' };
     }
 
     return {
@@ -179,6 +179,10 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const roleDropdownRef = useRef<HTMLDivElement | null>(null);
 
+  // NEW: OTP State Management
+  const [isOtpStep, setIsOtpStep] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+
   // Handle outside click for dropdown
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
@@ -191,9 +195,72 @@ export default function Home() {
   }, []);
 
   // ============================================
-  // HANDLE LOGIN WITH EMAIL VALIDATION
+  // HANDLE FINAL LOGIN REDIRECT / SESSION
   // ============================================
+  const executeFinalLogin = async () => {
+    sessionStorage.setItem('userRole', selectedRole);
+    
+    const dashboardUrl = getDashboardUrl(selectedRole);
+    
+    if (!dashboardUrl) {
+      setMessage("Invalid role selected. Please try again.");
+      setIsLoading(false);
+      return;
+    }
 
+    sessionStorage.setItem('dashboardRedirectUrl', dashboardUrl);
+
+    if (loginMethod === "email") {
+      // EMAIL LOGIN: Trigger Google SSO
+      sessionStorage.setItem('userEmail', email.trim());
+      sessionStorage.removeItem('userPhone');
+      
+      if (process.env.NODE_ENV === 'development') {
+        window.location.href = dashboardUrl;
+        return;
+      }
+
+      await signIn('google', {
+        callbackUrl: '/dashboard',
+        redirect: true,
+      });
+
+    } else {
+      // PHONE LOGIN: User verified via OTP.
+      sessionStorage.setItem('userPhone', phone.trim());
+      sessionStorage.removeItem('userEmail');
+      
+      try {
+        // Fetch an SSO token to securely pass the login state to the external staging server
+        const tokenRes = await fetch('/api/sso-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: phone.trim(), role: selectedRole })
+        });
+        
+        if (tokenRes.ok) {
+          const data = await tokenRes.json();
+          // Safely append access_token if it exists, otherwise fall back to base URL
+          if (data.access_token) {
+            window.location.href = `${dashboardUrl}?token=${data.access_token}`;
+          } else {
+            window.location.href = dashboardUrl;
+          }
+        } else {
+          // Fallback if the token generation fails
+          console.warn("SSO token generation failed. Redirecting without token.");
+          window.location.href = dashboardUrl;
+        }
+      } catch (error) {
+        console.error("Error generating SSO token:", error);
+        window.location.href = dashboardUrl;
+      }
+    }
+  };
+  
+  // ============================================
+  // STEP 1: HANDLE INITIAL LOGIN VERIFICATION
+  // ============================================
   const handleLogin = async () => {
     setMessage("");
 
@@ -225,39 +292,50 @@ export default function Home() {
         return;
       }
 
-      // Email is valid - proceed with login
-      sessionStorage.setItem('userRole', selectedRole);
-      if (loginMethod === "email") {
-        sessionStorage.setItem('userEmail', email.trim());
-        sessionStorage.removeItem('userPhone');
-      } else {
-        sessionStorage.setItem('userPhone', phone.trim());
-        sessionStorage.removeItem('userEmail');
-      }
-      
-      const dashboardUrl = getDashboardUrl(selectedRole);
-      
-      if (!dashboardUrl) {
-        setMessage("Invalid role selected. Please try again.");
+      // If user selected Phone Login, transition to the OTP step instead of logging in
+      if (loginMethod === "phone") {
+        setIsOtpStep(true);
+        setMessage("OTP sent via SMS. Valid for 10 minutes.");
         setIsLoading(false);
         return;
       }
 
-      sessionStorage.setItem('dashboardRedirectUrl', dashboardUrl);
-
-      if (process.env.NODE_ENV === 'development') {
-        window.location.href = dashboardUrl;
-        return;
-      }
-
-      await signIn('google', {
-        callbackUrl: '/dashboard',
-        redirect: true,
-      });
+      // If user selected Email Login, proceed directly to final login
+      await executeFinalLogin();
       
     } catch (error) {
       console.error('Login error:', error);
       setMessage("Something went wrong. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  // ============================================
+  // STEP 2: HANDLE OTP VERIFICATION
+  // ============================================
+  const handleVerifyOtp = async () => {
+    setMessage("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phone.trim(), otp: otpCode }),
+      });
+      
+      const data = await response.json();
+      
+      if (!data.valid) {
+        setMessage(data.message);
+        setIsLoading(false);
+        return;
+      }
+
+      // OTP matches! Execute final login.
+      await executeFinalLogin();
+    } catch (error) {
+      setMessage("Failed to verify OTP. Please try again.");
       setIsLoading(false);
     }
   };
@@ -303,151 +381,216 @@ export default function Home() {
 
         {/* Form card side */}
         <div className="form-side">
-        <form className="card" aria-labelledby="welcome-heading" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+        <form 
+          className="card" 
+          aria-labelledby="welcome-heading" 
+          onSubmit={(e) => { 
+            e.preventDefault(); 
+            isOtpStep ? handleVerifyOtp() : handleLogin(); 
+          }}
+        >
           <span className="wave" aria-hidden="true">👋</span>
           <h2 className="welcome-heading" id="welcome-heading">Welcome Back!</h2>
           <p className="welcome-sub">Sign in to access your account</p>
 
-          <div className="tabs" role="tablist" aria-label="Sign in method">
-            <button
-              className={`tab ${loginMethod === "email" ? "active" : ""}`}
-              type="button"
-              role="tab"
-              aria-selected={loginMethod === "email"}
-              disabled={isLoading}
-              onClick={() => {
-                setLoginMethod("email");
-                setMessage("");
-              }}
-            >
-              <MailIcon />
-              <span>Email</span>
-            </button>
-            <button
-              className={`tab ${loginMethod === "phone" ? "active" : ""}`}
-              type="button"
-              role="tab"
-              aria-selected={loginMethod === "phone"}
-              disabled={isLoading}
-              onClick={() => {
-                setLoginMethod("phone");
-                setMessage("");
-              }}
-            >
-              <PhoneIcon />
-              <span>Phone Number</span>
-            </button>
-          </div>
-
-          {loginMethod === "email" ? (
-            <label className="field-group">
-              <span>
-                Email Address <strong className="required-marker">*</strong>
-              </span>
-              <span className="input-wrap">
-                <MailIcon />
-                <input
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+          {/* DYNAMIC FORM RENDERING BASED ON isOtpStep */}
+          {!isOtpStep ? (
+            <>
+              {/* STEP 1: Standard Login Form */}
+              <div className="tabs" role="tablist" aria-label="Sign in method">
+                <button
+                  className={`tab ${loginMethod === "email" ? "active" : ""}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={loginMethod === "email"}
                   disabled={isLoading}
-                  required
-                />
-              </span>
-            </label>
-          ) : (
-            <label className="field-group">
-              <span>
-                Phone Number <strong className="required-marker">*</strong>
-              </span>
-              <span className="input-wrap">
-                <PhoneIcon />
-                <input
-                  type="tel"
-                  placeholder="Enter your phone number"
-                  value={phone}
-                  onChange={(event) => {
-                    // ✅ Only allow digits, max 10 characters
-                    const digitsOnly = event.target.value.replace(/\D/g, '').slice(0, 10);
-                    setPhone(digitsOnly);
+                  onClick={() => {
+                    setLoginMethod("email");
+                    setMessage("");
                   }}
-                  maxLength={10}
-                  inputMode="numeric"
-                  pattern="[0-9]{10}"
+                >
+                  <MailIcon />
+                  <span>Email</span>
+                </button>
+                <button
+                  className={`tab ${loginMethod === "phone" ? "active" : ""}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={loginMethod === "phone"}
                   disabled={isLoading}
-                  required
-                />
-              </span>
-            </label>
-          )}
-
-          <div className="field-group role-dropdown" ref={roleDropdownRef}>
-            <span>
-              Select Role <strong className="required-marker">*</strong>
-            </span>
-            <button
-              className={`select-box ${isRoleOpen ? "open" : ""}`}
-              type="button"
-              aria-expanded={isRoleOpen}
-              disabled={isLoading}
-              onClick={() => setIsRoleOpen((current) => !current)}
-            >
-              <span className="select-label">
-                <UsersIcon />
-                {/* Presentational only — the underlying value stays "Select your role"
-                    so isFormValid() and the role mapping are untouched. */}
-                <span id="selectedRole" className={selectedRole === "Select your role" ? "is-placeholder" : ""}>
-                  {selectedRole === "Select your role" ? "Choose your role" : selectedRole}
-                </span>
-              </span>
-              <ChevronIcon />
-            </button>
-            {isRoleOpen ? (
-              <div className="role-menu" role="listbox" aria-label="Role options">
-                {roles.map((role) => (
-                  <button
-                    className={`role-menu-option ${selectedRole === role ? "selected" : ""}`}
-                    key={role}
-                    type="button"
-                    role="option"
-                    aria-selected={selectedRole === role}
-                    onClick={() => {
-                      setSelectedRole(role);
-                      setIsRoleOpen(false);
-                    }}
-                  >
-                    {role}
-                  </button>
-                ))}
+                  onClick={() => {
+                    setLoginMethod("phone");
+                    setMessage("");
+                  }}
+                >
+                  <PhoneIcon />
+                  <span>Phone Number</span>
+                </button>
               </div>
-            ) : null}
-          </div>
 
-          {message && (
-            <div className="form-message" role="alert">
-              {message}
-            </div>
+              {loginMethod === "email" ? (
+                <label className="field-group">
+                  <span>
+                    Email Address <strong className="required-marker">*</strong>
+                  </span>
+                  <span className="input-wrap">
+                    <MailIcon />
+                    <input
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      disabled={isLoading}
+                      required
+                    />
+                  </span>
+                </label>
+              ) : (
+                <label className="field-group">
+                  <span>
+                    Phone Number <strong className="required-marker">*</strong>
+                  </span>
+                  <span className="input-wrap">
+                    <PhoneIcon />
+                    <input
+                      type="tel"
+                      placeholder="Enter your phone number"
+                      autoComplete="tel"
+                      value={phone}
+                      onChange={(event) => {
+                        const digitsOnly = event.target.value.replace(/\D/g, '').slice(0, 10);
+                        setPhone(digitsOnly);
+                      }}
+                      maxLength={10}
+                      inputMode="numeric"
+                      pattern="[0-9]{10}"
+                      disabled={isLoading}
+                      required
+                    />
+                  </span>
+                </label>
+              )}
+
+              <div className="field-group role-dropdown" ref={roleDropdownRef}>
+                <span>
+                  Select Role <strong className="required-marker">*</strong>
+                </span>
+                <button
+                  className={`select-box ${isRoleOpen ? "open" : ""}`}
+                  type="button"
+                  aria-expanded={isRoleOpen}
+                  disabled={isLoading}
+                  onClick={() => setIsRoleOpen((current) => !current)}
+                >
+                  <span className="select-label">
+                    <UsersIcon />
+                    <span id="selectedRole" className={selectedRole === "Select your role" ? "is-placeholder" : ""}>
+                      {selectedRole === "Select your role" ? "Choose your role" : selectedRole}
+                    </span>
+                  </span>
+                  <ChevronIcon />
+                </button>
+                {isRoleOpen ? (
+                  <div className="role-menu" role="listbox" aria-label="Role options">
+                    {roles.map((role) => (
+                      <button
+                        className={`role-menu-option ${selectedRole === role ? "selected" : ""}`}
+                        key={role}
+                        type="button"
+                        role="option"
+                        aria-selected={selectedRole === role}
+                        onClick={() => {
+                          setSelectedRole(role);
+                          setIsRoleOpen(false);
+                        }}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+
+              {message && (
+                <div className="form-message" role="alert">
+                  {message}
+                </div>
+              )}
+
+              <button
+                className="sign-in"
+                type="submit"
+                disabled={isLoading || !isFormValid()}
+              >
+                {isLoading ? <span className="loader" aria-hidden="true" /> : <LoginIcon />}
+                <span>{getButtonText()}</span>
+                {isLoading ? null : <ArrowRightIcon />}
+              </button>
+
+              <div className="or-row">
+                <span>OR</span>
+              </div>
+
+              <p className="administrator">
+                <ShieldIcon />
+                Don&apos;t have an account? <strong>Contact SWAIS administrator</strong>
+              </p>
+            </>
+          ) : (
+            <>
+              {/* STEP 2: OTP Entry Form */}
+              <label className="field-group" style={{ marginTop: '1rem' }}>
+                <span>
+                  Enter 6-Digit OTP <strong className="required-marker">*</strong>
+                </span>
+                <span className="input-wrap">
+                  <ShieldIcon />
+                  <input
+                    type="text"
+                    placeholder="123456"
+                    value={otpCode}
+                    onChange={(event) => setOtpCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                    maxLength={6}
+                    inputMode="numeric"
+                    disabled={isLoading}
+                    style={{ letterSpacing: '8px', fontSize: '1.25rem', fontWeight: 'bold' }}
+                    required
+                  />
+                </span>
+              </label>
+
+              {message && (
+                <div className="form-message" role="alert" style={{ color: message.includes('sent') ? '#10b981' : undefined }}>
+                  {message}
+                </div>
+              )}
+
+              <button
+                className="sign-in"
+                type="submit"
+                disabled={isLoading || otpCode.length !== 6}
+                style={{ marginTop: '1rem' }}
+              >
+                {isLoading ? <span className="loader" aria-hidden="true" /> : <LoginIcon />}
+                <span>{isLoading ? "Verifying..." : "Verify & Login"}</span>
+              </button>
+              
+              <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                <button 
+                  type="button" 
+                  onClick={() => { 
+                    setIsOtpStep(false); 
+                    setOtpCode(""); 
+                    setMessage(""); 
+                  }}
+                  style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.875rem', cursor: 'pointer', textDecoration: 'underline' }}
+                  disabled={isLoading}
+                >
+                  Change phone number or role
+                </button>
+              </div>
+            </>
           )}
-
-          <button
-            className="sign-in"
-            type="submit"
-            disabled={isLoading || !isFormValid()}
-          >
-            {isLoading ? <span className="loader" aria-hidden="true" /> : <LoginIcon />}
-            <span>{getButtonText()}</span>
-            {isLoading ? null : <ArrowRightIcon />}
-          </button>
-
-          <div className="or-row">
-            <span>OR</span>
-          </div>
-
-          <p className="administrator">
-            <ShieldIcon />
-            Don&apos;t have an account? <strong>Contact SWAIS administrator</strong>
-          </p>
         </form>
         </div>
       </div>

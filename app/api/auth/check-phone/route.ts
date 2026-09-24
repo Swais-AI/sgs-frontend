@@ -3,16 +3,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withClient } from '@/lib/db';
 import { getRoleMapping } from '@/lib/role-mapping';
+import { sendOtpSms } from '@/lib/nimbus-sms'; 
 
 // Normalize phone number
 function normalizePhone(phone: string): string {
   return phone.replace(/[\s\-\(\)\.]/g, '');
 }
 
-// Validate phone number
+// Validate phone number - Rewritten to avoid copy-paste symbol errors
 function isValidPhone(phone: string): boolean {
   const cleaned = normalizePhone(phone);
-  return /^[6-9]\d{9}$/.test(cleaned) || /^[0-9]{10,15}$/.test(cleaned);
+  const isIndianMobile = /^[6-9]\d{9}$/.test(cleaned);
+  const isGenericPhone = /^[0-9]{10,15}$/.test(cleaned);
+  
+  if (isIndianMobile) {
+    return true;
+  }
+  
+  if (isGenericPhone) {
+    return true;
+  }
+  
+  return false;
 }
 
 function phoneLookupValues(phone: string): string[] {
@@ -21,12 +33,10 @@ function phoneLookupValues(phone: string): string[] {
 
   const values = [cleaned];
   
-  // If it's a 10-digit number, try with +91 prefix
   if (cleaned.length === 10) {
     values.push(`+91${cleaned}`);
   }
   
-  // If it starts with 91, try without
   if (cleaned.startsWith('91') && cleaned.length === 12) {
     values.push(cleaned.slice(2));
   }
@@ -82,7 +92,6 @@ export async function POST(request: NextRequest) {
       LIMIT 1
     `;
 
-    // Use withClient for automatic connection management
     const result = await withClient(async (client) => {
       return await client.query(query, phoneValues);
     });
@@ -94,9 +103,40 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // --- NEW OTP LOGIC ---
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await withClient(async (client) => {
+      // 1. Auto-create the OTP table if it doesn't exist
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS otp_verifications (
+          phone VARCHAR(20) PRIMARY KEY,
+          otp VARCHAR(6) NOT NULL,
+          expires_at TIMESTAMP NOT NULL
+        )
+      `);
+      
+      // 2. Save/Update the OTP for this phone number
+      await client.query(`
+        INSERT INTO otp_verifications (phone, otp, expires_at)
+        VALUES ($1, $2, NOW() + INTERVAL '10 minutes')
+        ON CONFLICT (phone) DO UPDATE SET otp = $2, expires_at = NOW() + INTERVAL '10 minutes'
+      `, [phone.trim(), otp]);
+    });
+
+    // 3. Send SMS via Nimbus
+    const smsResult = await sendOtpSms(phone.trim(), otp);
+    
+    if (!smsResult.success) {
+      return NextResponse.json(
+        { valid: false, message: 'Failed to send OTP via SMS. Please try again.' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       valid: true,
-      message: 'User validated successfully',
+      message: 'OTP sent successfully',
       user: result.rows[0]
     });
   } catch (error) {
