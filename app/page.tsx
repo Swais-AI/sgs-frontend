@@ -318,21 +318,20 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phone.trim(), otp: otpCode }),
+      const result = await signIn('phone-otp', {
+        phone: phone.trim(),
+        otp: otpCode,
+        role: selectedRole,
+        redirect: false,
       });
-      
-      const data = await response.json();
-      
-      if (!data.valid) {
-        setMessage(data.message);
+
+      if (!result?.ok || result.error) {
+        setMessage('Invalid or expired OTP. Please request a new one.');
         setIsLoading(false);
         return;
       }
 
-      // OTP matches! Execute final login.
+      // Auth.js has created the session cookie; continue to the role dashboard.
       await executeFinalLogin();
     } catch (error) {
       setMessage("Failed to verify OTP. Please try again.");
